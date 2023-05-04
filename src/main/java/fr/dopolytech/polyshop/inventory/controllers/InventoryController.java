@@ -11,11 +11,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import fr.dopolytech.polyshop.inventory.dto.InventoryDto;
 import fr.dopolytech.polyshop.inventory.dto.PutInventoryDto;
+import fr.dopolytech.polyshop.inventory.exceptions.CreateEventFailException;
 import fr.dopolytech.polyshop.inventory.models.Inventory;
 import fr.dopolytech.polyshop.inventory.repositories.InventoryRepository;
 import fr.dopolytech.polyshop.inventory.services.InventoryService;
@@ -30,35 +32,37 @@ public class InventoryController {
     this.inventoryService = inventoryService;
   }
 
-  @GetMapping(produces = "application/json")
-  public List<InventoryDto> getInventory() {
-    return inventoryService.findAll();
-  }
-
-  @GetMapping(value = "/{id}", produces = "application/json")
-  public ResponseEntity<InventoryDto> getInventoryById(@PathVariable("id") String id) {
-    InventoryDto inv = inventoryService.findInventoryByProductId(id);
-    if(inv == null) {
-      return ResponseEntity.notFound().build();
-    }
-    return ResponseEntity.ok(inv);
-  }
-
   @PostMapping(consumes = "application/json")
   @ResponseStatus(code = HttpStatus.CREATED)
-  public InventoryDto addInventory(@RequestBody InventoryDto inventory) {
-    return inventoryService.save(inventory);
+  public ResponseEntity<Object> addInventory(@RequestBody InventoryDto inventory) {
+    try {
+      InventoryDto invDto = inventoryService.save(inventory);
+      return ResponseEntity.ok(invDto);
+    } catch (CreateEventFailException e) {
+      return ResponseEntity.internalServerError().body(e.getMessage());
+    }
   }
 
   @PutMapping(value = "/{id}", consumes = "application/json")
-  public ResponseEntity<InventoryDto> updateInventory(@PathVariable("id") String id, @RequestBody PutInventoryDto putInventoryDto) {
-    InventoryDto inv = inventoryService.update(id, putInventoryDto);
-    return ResponseEntity.ok(inv);
+  public ResponseEntity<Object> updateInventory(@PathVariable("id") String id,
+      @RequestBody PutInventoryDto putInventoryDto) {
+    try {
+
+      InventoryDto inv = inventoryService.update(id, putInventoryDto);
+      return ResponseEntity.ok(inv);
+    } catch (CreateEventFailException e) {
+      return ResponseEntity.internalServerError().body(e.getMessage());
+    }
   }
 
   @DeleteMapping(value = "/{id}")
   @ResponseStatus(code = HttpStatus.NO_CONTENT)
-  public void deleteInventory(@PathVariable("id") String id) {
-    inventoryService.deleteByProductId(id);
+  public ResponseEntity<Object> deleteInventory(@PathVariable("id") String id) {
+    try {
+      inventoryService.deleteByProductId(id);
+      return ResponseEntity.noContent().build();
+    } catch (CreateEventFailException e) {
+      return ResponseEntity.internalServerError().body(e.getMessage());
+    }
   }
 }

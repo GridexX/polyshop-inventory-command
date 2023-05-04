@@ -1,9 +1,10 @@
 version: '3.9'
 
 services:
+  # This Database is used to store all events
   postgres:
     image: postgres:15.2
-    container_name: postgres_inventory
+    container_name: postgres_inventory_command
     expose:
       - "5432"
     # ports:
@@ -16,12 +17,13 @@ services:
       - internal
     volumes:
       - postgres_inventory:/var/lib/postgresql/data
+    
 
   inventory:
     image: maven:3.9-amazoncorretto-19
-    container_name: inventory
+    container_name: inventory_command
     expose:
-      - 8082
+      - 8088
     volumes:
       - .:/app
       - maven-repo:/root/.m2
